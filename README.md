@@ -20,8 +20,10 @@ campus: 187.5 ha, 2 720 footprints, a 250 m analysis grid.
 
 ![citytwin viewer: plan view and LoD1 3-D view](docs/assets/plan_view.png)
 
-*The self-contained viewer (`web/index.html`, no CDN, opens from `file://`): exposure
-grid, footprints, green space and an isometric LoD1 model with a height slider.*
+*The self-contained viewer (`web/index.html`, no CDN, opens from `file://`): a north-up
+exposure plan beside an axonometric LoD1 model. The two panels share one selection —
+click a footprint or a 250 m cell in either map and the other map highlights it too.
+The 3-D compass rotates with the view and reports the bearing of north.*
 
 ## Why this exists
 
@@ -99,7 +101,13 @@ citytwin eval           # golden-question harness, writes docs/agent_eval.md
 `build` works offline.
 
 Open `web/index.html` directly in a browser — no server, no network, no JavaScript
-dependencies. `?mode=height` and `?mode=typology` switch the colouring.
+dependencies. `?mode=height` and `?mode=typology` switch the colouring, `?sel=<id>` and
+`?cell=<id>` open a given selection, and `Esc` clears it. Both panels are drawn from one
+payload, so a click, a hover and a cell selection are shared: the plan stays north-up, the
+3-D compass turns with the orbit and prints the bearing, and each view carries its own
+scale bar and EPSG:25832 readout. The viewer runs a small cartographic self-test at load
+(`east → right`, `north → up`, in both projections) and exposes the result as
+`<html data-cartography="ok">`, which `make figures` asserts before taking screenshots.
 
 ## Pipeline
 

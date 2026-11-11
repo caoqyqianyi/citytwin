@@ -189,7 +189,11 @@ def cmd_export(args: argparse.Namespace) -> int:
 
     from .exporters.viewer import build_viewer
 
-    cityjson = buildings_to_cityjson(buildings, BUILD_DIR / "cityjson" / "esch_lod1.city.json")
+    cityjson = buildings_to_cityjson(
+        buildings,
+        BUILD_DIR / "cityjson" / "esch_lod1.city.json",
+        aoi_name=DEFAULT_AOI.name,
+    )
     print(f"cityjson     {cityjson}")
     tiles = buildings_to_3dtiles(buildings, BUILD_DIR / "3dtiles")
     print(f"3d tiles     {tiles['content']}")

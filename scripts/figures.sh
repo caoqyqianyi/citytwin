@@ -39,6 +39,19 @@ shoot() {
   echo "rendered $target"
 }
 
+# cartography gate: the viewer runs a projection self-test at load and writes the result
+# into <html data-cartography>. Refuse to publish figures if the page did not pass.
+DOM="$(mktemp)"
+"$CHROME" --headless=new --disable-gpu --virtual-time-budget=6000 \
+  --dump-dom "file://$PWD/web/index.html" > "$DOM" 2>/dev/null || true
+if ! grep -q 'data-cartography="ok"' "$DOM"; then
+  echo "cartography self-test failed — refusing to render figures" >&2
+  grep -o 'data-cartography="[^"]*"\|data-jserror="[^"]*"' "$DOM" >&2 || true
+  rm -f "$DOM"
+  exit 1
+fi
+rm -f "$DOM"
+
 shoot "" "$OUT/plan_view.png"
 shoot typology "$OUT/typology_view.png"
 

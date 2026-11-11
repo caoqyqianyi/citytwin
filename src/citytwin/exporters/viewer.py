@@ -53,6 +53,10 @@ def build_viewer(
         else None
     )
 
+    cells_frame = cells.reset_index(drop=True)
+    cell_ids = [str(value) for value in cells_frame["cell_id"].tolist()]
+    cell_index = {cell_id: position for position, cell_id in enumerate(cell_ids)}
+
     records = []
     for row in frame.itertuples(index=False):
         geometry = row.geometry
@@ -87,18 +91,24 @@ def build_viewer(
                 ],
                 "cx": round(geometry.centroid.x - origin[0], 1),
                 "cy": round(geometry.centroid.y - origin[1], 1),
+                "cid": str(getattr(row, "cell_id", "")),
+                "ci": cell_index.get(str(getattr(row, "cell_id", "")), -1),
             }
         )
 
-    cell_records = [
-        {
-            "r": _ring(row.geometry, origin),
-            "hei": _jsonable(float(row.hei)),
-            "hp": _jsonable(getattr(row, "hotspot_probability", None)),
-        }
-        for row in cells.itertuples(index=False)
-        if row.geometry is not None
-    ]
+    cell_records = []
+    for position, row in enumerate(cells_frame.itertuples(index=False)):
+        if row.geometry is None or row.geometry.is_empty:
+            continue
+        cell_records.append(
+            {
+                "id": str(row.cell_id),
+                "r": _ring(row.geometry, origin),
+                "hei": _jsonable(float(row.hei)),
+                "hp": _jsonable(getattr(row, "hotspot_probability", None)),
+                "i": position,
+            }
+        )
 
     green_rings = []
     if green is not None and len(green):
@@ -145,6 +155,23 @@ def build_viewer(
                 0.0,
                 round(float(height_values.max()), 1) if len(height_values) else 12.0,
             ],
+            "origin": [round(float(origin[0]), 1), round(float(origin[1]), 1)],
+            "crs_metric": str(CRS_METRIC),
+            "labelled": (
+                int(frame["has_height_label"].sum())
+                if "has_height_label" in frame.columns
+                else len(records)
+            ),
+            "label_coverage": (
+                round(100.0 * float(frame["has_height_label"].mean()), 1)
+                if "has_height_label" in frame.columns
+                else 100.0
+            ),
+            "interval": (
+                round(float(frame["height_uncertainty_m"].median()), 1)
+                if "height_uncertainty_m" in frame.columns
+                else 0.0
+            ),
             "hei_range": [
                 float(np.floor(hei_values.min())) if len(hei_values) else 0.0,
                 float(np.ceil(hei_values.max())) if len(hei_values) else 100.0,
