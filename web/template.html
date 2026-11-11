@@ -67,23 +67,28 @@
   .seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:640}
   .seg button:hover{color:var(--ink)}
   .ctl{display:flex;align-items:center;gap:9px;font-size:11px;color:var(--muted)}
-  .ctl input[type=range]{width:88px;accent-color:var(--accent)}
+  .ctl label{white-space:nowrap}
+  .ctl input[type=range]{width:76px;accent-color:var(--accent)}
   .ctl button{font:inherit;font-size:11px;border:1px solid var(--line);background:#fff;
     color:var(--ink-soft);border-radius:8px;padding:5px 9px;cursor:pointer}
   .ctl button:hover{border-color:var(--line-strong);color:var(--ink)}
 
-  .legend{position:absolute;left:13px;bottom:13px;background:rgba(255,254,251,.94);
-    border:1px solid var(--line);border-radius:10px;padding:9px 11px 8px;font-size:10.8px;
-    line-height:1.5;box-shadow:0 6px 18px -14px rgba(24,28,33,.4);backdrop-filter:blur(3px)}
-  .legend h4{margin:0 0 5px;font-size:10px;letter-spacing:.09em;text-transform:uppercase;
-    color:var(--muted);font-weight:650}
-  .legend .row{display:flex;align-items:flex-start;gap:6px;max-width:252px;line-height:1.35}
-  .legend .row+.row{margin-top:3px}
-  .legend .val{color:var(--muted);font-variant-numeric:tabular-nums;min-width:22px}
-  .sw{width:15px;height:9px;border-radius:2px;display:inline-block;flex:0 0 15px;margin-top:2px}
-
-  .hint{position:absolute;right:13px;bottom:13px;font-size:10.2px;color:var(--muted);
-    background:rgba(255,254,251,.9);border:1px solid var(--line);border-radius:8px;padding:4px 8px}
+  .panel-foot{display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:6px 13px;border-top:1px solid var(--line);background:#fff;flex:0 0 auto;
+    height:86px;box-sizing:border-box}
+  .legend{display:flex;align-items:center;gap:13px 15px;flex-wrap:wrap;font-size:10.4px;
+    line-height:1.35;min-width:0}
+  .legend h4{margin:0;font-size:9.6px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted);font-weight:650;white-space:nowrap}
+  .legend .row{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+  .legend .val{color:var(--muted);font-variant-numeric:tabular-nums}
+  .sw{width:14px;height:8px;border-radius:2px;display:inline-block;flex:0 0 14px}
+  .foot-tools{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+  .foot-tools canvas{display:block;cursor:default}
+  #planCompass,#isoCompass{width:62px;height:62px}
+  #planScale,#isoScale{width:96px;height:22px}
+  .foot-crs{font-size:9.4px;letter-spacing:.06em;color:var(--faint);white-space:nowrap}
+  #bearing{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 
   footer{border-top:1px solid var(--line);padding:8px 22px;color:var(--muted);font-size:10.4px;
     display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;background:var(--panel)}
@@ -122,7 +127,7 @@
     <div class="panel-head">
       <div>
         <div class="panel-title">Plan view · north up</div>
-        <div class="panel-note">EPSG:25832 · 250 m cells · footprints · green space</div>
+        <div class="panel-note">250 m cells · footprints · green space · click a cell to select it</div>
       </div>
       <div class="ctl">
         <div class="seg" id="modeSeg" role="group" aria-label="Colour">
@@ -134,7 +139,14 @@
     </div>
     <div class="canvas-wrap">
       <canvas id="plan" aria-label="Plan view of building footprints and exposure grid"></canvas>
+    </div>
+    <div class="panel-foot">
       <div class="legend" id="planLegend"></div>
+      <div class="foot-tools">
+        <canvas id="planCompass" aria-label="North arrow, plan is north-up"></canvas>
+        <canvas id="planScale" aria-label="Scale bar"></canvas>
+        <span class="foot-crs">EPSG:25832</span>
+      </div>
     </div>
   </section>
 
@@ -142,7 +154,7 @@
     <div class="panel-head">
       <div>
         <div class="panel-title">LoD1 3-D view</div>
-        <div class="panel-note">extruded footprints · compass follows the rotation</div>
+        <div class="panel-note">drag to orbit · click a building to select</div>
       </div>
       <div class="ctl">
         <label for="exag">Vertical <span id="exagVal">2.2×</span></label>
@@ -153,8 +165,14 @@
     </div>
     <div class="canvas-wrap">
       <canvas id="iso" aria-label="Isometric 3-D view of the LoD1 city model"></canvas>
+    </div>
+    <div class="panel-foot">
       <div class="legend" id="isoLegend"></div>
-      <div class="hint">drag to orbit · click to select</div>
+      <div class="foot-tools">
+        <canvas id="isoCompass" aria-label="Compass, rotates with the view"></canvas>
+        <span id="bearing">N 055°</span>
+        <canvas id="isoScale" aria-label="Approximate scale bar"></canvas>
+      </div>
     </div>
   </section>
 </main>
@@ -178,6 +196,10 @@
   const PLAN = document.getElementById('plan');
   const ISO = document.getElementById('iso');
   const TIP = document.getElementById('tip');
+  const PLAN_COMPASS = document.getElementById('planCompass');
+  const ISO_COMPASS = document.getElementById('isoCompass');
+  const PLAN_SCALE = document.getElementById('planScale');
+  const ISO_SCALE = document.getElementById('isoScale');
   const planCtx = PLAN.getContext('2d');
   const isoCtx = ISO.getContext('2d');
 
@@ -212,6 +234,11 @@
   if(params.has('sel')){
     const n = parseInt(params.get('sel'),10);
     if(Number.isInteger(n) && n >= 0 && n < DATA.buildings.length) state.selB = n;
+  }
+
+  if(params.has('exag')){
+    const n = parseFloat(params.get('exag'));
+    if(isFinite(n)) state.exaggeration = Math.max(0.8, Math.min(4, n));
   }
 
   // ---------- helpers ----------
@@ -275,13 +302,12 @@
     const dx = x-CX, dy = y-CY, ca = Math.cos(state.phi), sa = Math.sin(state.phi);
     const X = dx*ca - dy*sa;
     const up = dx*sa + dy*ca;
-    return [X*0.99, -(up*SIN_E + z*COS_E)];
+    return [X*0.99, -(up*SIN_E + z*state.exaggeration*COS_E)];
   }
   function isoTransform(w, h){
-    const pad = 20;
-    const hmax = DATA.meta.height_range[1];
+    const pad = Math.max(26, Math.min(w,h)*0.07);
     let minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity;
-    for(const x of [CITY_B[0],CITY_B[2]]) for(const y of [CITY_B[1],CITY_B[3]]) for(const z of [0,hmax]){
+    for(const x of [CITY_B[0],CITY_B[2]]) for(const y of [CITY_B[1],CITY_B[3]]) for(const z of [0]){
       const p = project(x,y,z);
       minX = Math.min(minX,p[0]); maxX = Math.max(maxX,p[0]);
       minY = Math.min(minY,p[1]); maxY = Math.max(maxY,p[1]);
@@ -402,40 +428,58 @@
       planCtx.stroke();
     }
 
-    drawPlanCartouche(w,h,T);
     drawLegend();
+    drawPlanDial();
+    drawPlanScale();
   }
 
-  function drawPlanCartouche(w,h,T){
-    // scale bar
-    const metres = T.s*100 > 118 ? 100 : 50;
-    const px = metres*T.s;
-    const x0 = w-26-px, y0 = h-26;
-    planCtx.strokeStyle = 'rgba(25,29,34,.8)'; planCtx.lineWidth = 1.3;
-    planCtx.beginPath();
-    planCtx.moveTo(x0,y0); planCtx.lineTo(x0+px,y0);
-    planCtx.moveTo(x0,y0-4); planCtx.lineTo(x0,y0+4);
-    planCtx.moveTo(x0+px,y0-4); planCtx.lineTo(x0+px,y0+4);
-    planCtx.stroke();
-    planCtx.fillStyle = 'rgba(25,29,34,.75)';
-    planCtx.font = '10px -apple-system,Helvetica Neue,Inter,sans-serif';
-    planCtx.textAlign = 'center';
-    planCtx.fillText(metres+' m', x0+px/2, y0-9);
-    planCtx.textAlign = 'left';
+  function dialCanvas(canvas){
+    const {w,h} = size(canvas);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,w,h);
+    return {ctx,w,h};
+  }
 
-    // north rose (fixed: the plan is north-up)
-    const nx = w-40, ny = 38, r = 12;
-    planCtx.beginPath(); planCtx.arc(nx,ny,r,0,Math.PI*2);
-    planCtx.strokeStyle = 'rgba(25,29,34,.28)'; planCtx.lineWidth = 0.9; planCtx.stroke();
-    planCtx.beginPath();
-    planCtx.moveTo(nx,ny-r-4); planCtx.lineTo(nx-3.4,ny+2); planCtx.lineTo(nx,ny-1.4);
-    planCtx.lineTo(nx+3.4,ny+2); planCtx.closePath();
-    planCtx.fillStyle = 'rgba(25,29,34,.78)'; planCtx.fill();
-    planCtx.font = '600 10px -apple-system,Helvetica Neue,Inter,sans-serif';
-    planCtx.textAlign = 'center';
-    planCtx.fillStyle = 'rgba(25,29,34,.8)';
-    planCtx.fillText('N', nx, ny+r+13);
-    planCtx.textAlign = 'left';
+  // north rose in the plan footer: the plan never rotates, so the rose never turns
+  function drawPlanDial(){
+    const {ctx,w,h} = dialCanvas(PLAN_COMPASS);
+    const cx = w/2, cy = h/2-3, r = Math.min(w,h)/2-11;
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.strokeStyle = 'rgba(25,29,34,.22)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx, cy-r-1);
+    ctx.lineTo(cx-3.4, cy+3); ctx.lineTo(cx, cy-0.4); ctx.lineTo(cx+3.4, cy+3);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(25,29,34,.82)'; ctx.fill();
+    ctx.fillStyle = 'rgba(25,29,34,.68)';
+    ctx.font = '600 8px -apple-system,Helvetica Neue,Inter,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText('N', cx, h-2);
+  }
+
+  function scaleBar(canvas, pxPerMetre, approx){
+    const {ctx,w,h} = dialCanvas(canvas);
+    let m = 10;
+    for(const c of [10,25,50,100,200,500]) if(c*pxPerMetre <= w-12) m = c;
+    const px = Math.min(w-12, m*pxPerMetre);
+    const x0 = (w-px)/2, y0 = h-6;
+    ctx.strokeStyle = 'rgba(25,29,34,.62)'; ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(x0,y0); ctx.lineTo(x0+px,y0);
+    ctx.moveTo(x0,y0-3); ctx.lineTo(x0,y0+3);
+    ctx.moveTo(x0+px,y0-3); ctx.lineTo(x0+px,y0+3);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(25,29,34,.72)';
+    ctx.font = '8.5px -apple-system,Helvetica Neue,Inter,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText((approx ? '≈ ' : '') + m + ' m', w/2, y0-5);
+  }
+
+  function drawPlanScale(){
+    const rect = PLAN.getBoundingClientRect();
+    const T = planTransform(rect.width, rect.height);
+    scaleBar(PLAN_SCALE, T.s, false);
   }
 
   function drawLegend(){
@@ -559,8 +603,8 @@
       isoCtx.strokeStyle = alpha(ACCENT,.9); isoCtx.lineWidth = 1.4; isoCtx.stroke();
     }
 
-    drawCompass(w,h);
-    drawIsoScale(w,h,T);
+    drawIsoDial();
+    drawIsoScale();
     const el = document.getElementById('isoLegend');
     if(state.mode === 'typology'){
       el.innerHTML = '<h4>Urban typology</h4>' + DATA.meta.typologies.map((name,i) =>
@@ -575,8 +619,9 @@
       '</span></div>').join('') + note;
   }
 
-  function drawCompass(w,h){
-    const cx = w-54, cy = 56, r = 29;
+  function drawIsoDial(){
+    const {ctx,w,h} = dialCanvas(ISO_COMPASS);
+    const cx = w/2, cy = h/2-2, r = Math.min(w,h)/2-13;
     const ca = Math.cos(state.phi), sa = Math.sin(state.phi);
     const dir = (bx, by) => {
       const X = bx*ca - by*sa;
@@ -584,70 +629,51 @@
       const len = Math.hypot(X,Y)||1;
       return [X/len, Y/len];
     };
-    isoCtx.save();
-    isoCtx.beginPath(); isoCtx.arc(cx,cy,r,0,Math.PI*2);
-    isoCtx.fillStyle = 'rgba(255,254,251,.94)'; isoCtx.fill();
-    isoCtx.strokeStyle = 'rgba(25,29,34,.18)'; isoCtx.lineWidth = 1; isoCtx.stroke();
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.strokeStyle = 'rgba(25,29,34,.22)'; ctx.lineWidth = 1; ctx.stroke();
 
-    // ticks every 30° of azimuth
     for(let deg=0; deg<360; deg+=30){
       const a = deg*Math.PI/180;
-      const [vx,vy] = dir(Math.sin(a), Math.cos(a));   // 0° = north, clockwise
+      const [vx,vy] = dir(Math.sin(a), Math.cos(a));
       const major = deg%90===0;
-      isoCtx.beginPath();
-      isoCtx.moveTo(cx+vx*r*0.78, cy+vy*r*0.78);
-      isoCtx.lineTo(cx+vx*r*0.96, cy+vy*r*0.96);
-      isoCtx.strokeStyle = major ? 'rgba(25,29,34,.45)' : 'rgba(25,29,34,.18)';
-      isoCtx.lineWidth = major ? 1.2 : 0.8;
-      isoCtx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx+vx*r*0.78, cy+vy*r*0.78);
+      ctx.lineTo(cx+vx*r*0.96, cy+vy*r*0.96);
+      ctx.strokeStyle = major ? 'rgba(25,29,34,.42)' : 'rgba(25,29,34,.16)';
+      ctx.lineWidth = major ? 1.1 : 0.7;
+      ctx.stroke();
     }
 
-    // north arrow
     const [nx,ny] = dir(0,1);
-    isoCtx.beginPath();
-    isoCtx.moveTo(cx+nx*r*0.90, cy+ny*r*0.95);
-    isoCtx.lineTo(cx+nx*r*0.28 - ny*6, cy+ny*r*0.28 + nx*6);
-    isoCtx.lineTo(cx+nx*r*0.28 + ny*6, cy+ny*r*0.28 - nx*6);
-    isoCtx.closePath();
-    isoCtx.fillStyle = ACCENT; isoCtx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx+nx*r*0.92, cy+ny*r*0.92);
+    ctx.lineTo(cx+nx*r*0.24 - ny*4.4, cy+ny*r*0.24 + nx*4.4);
+    ctx.lineTo(cx+nx*r*0.24 + ny*4.4, cy+ny*r*0.24 - nx*4.4);
+    ctx.closePath();
+    ctx.fillStyle = ACCENT; ctx.fill();
 
-    // cardinal letters, rotated with the view
-    isoCtx.font = '600 9.5px -apple-system,Helvetica Neue,Inter,sans-serif';
-    isoCtx.textAlign = 'center'; isoCtx.textBaseline = 'middle';
-    const letters = [['N',0,1,ACCENT],['E',1,0,'rgba(25,29,34,.55)'],
-                     ['S',0,-1,'rgba(25,29,34,.36)'],['W',-1,0,'rgba(25,29,34,.36)']];
+    ctx.font = '600 7.5px -apple-system,Helvetica Neue,Inter,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const letters = [['N',0,1,ACCENT],['E',1,0,'rgba(25,29,34,.5)'],
+                     ['S',0,-1,'rgba(25,29,34,.32)'],['W',-1,0,'rgba(25,29,34,.32)']];
     for(const [ch,bx,by,fill] of letters){
       const [vx,vy] = dir(bx,by);
-      isoCtx.fillStyle = fill;
-      isoCtx.fillText(ch, cx+vx*(r+12), cy+vy*(r+12));
+      ctx.fillStyle = fill;
+      ctx.fillText(ch, cx+vx*(r+7), cy+vy*(r+7));
     }
-    // bearing of north relative to screen-up, the number a reader needs
+
     const [bx,by] = dir(0,1);
     const bearing = (Math.atan2(bx, -by)*180/Math.PI + 360) % 360;
-    isoCtx.font = '10px -apple-system,Helvetica Neue,Inter,sans-serif';
-    isoCtx.fillStyle = 'rgba(25,29,34,.55)';
-    isoCtx.fillText('N '+String(Math.round(bearing)).padStart(3,'0')+'°', cx, cy+r+27);
-    isoCtx.restore();
+    document.getElementById('bearing').textContent =
+      'N ' + String(Math.round(bearing)).padStart(3,'0') + '°';
   }
 
-  function drawIsoScale(w,h,T){
-    // ground scale measured along the screen-right axis of the projection
-    const L = 50, ca = Math.cos(state.phi), sa = Math.sin(state.phi);
-    const p0 = project(CX, CY, 0);
-    const p1 = project(CX + L*ca, CY - L*sa, 0);
-    const px = Math.abs(T.X(p1[0]) - T.X(p0[0]));
-    const x0 = 28, y0 = 30;
-    isoCtx.strokeStyle = 'rgba(25,29,34,.55)'; isoCtx.lineWidth = 1.2;
-    isoCtx.beginPath();
-    isoCtx.moveTo(x0,y0); isoCtx.lineTo(x0+px,y0);
-    isoCtx.moveTo(x0,y0-3.5); isoCtx.lineTo(x0,y0+3.5);
-    isoCtx.moveTo(x0+px,y0-3.5); isoCtx.lineTo(x0+px,y0+3.5);
-    isoCtx.stroke();
-    isoCtx.fillStyle = 'rgba(25,29,34,.65)';
-    isoCtx.font = '10px -apple-system,Helvetica Neue,Inter,sans-serif';
-    isoCtx.textAlign = 'center';
-    isoCtx.fillText('≈ '+L+' m', x0+px/2, y0-8);
-    isoCtx.textAlign = 'left';
+  function drawIsoScale(){
+    const rect = ISO.getBoundingClientRect();
+    const T = isoTransform(rect.width, rect.height);
+    // ground scale along the screen-right axis; the projection foreshortens other directions
+    scaleBar(ISO_SCALE, T.s*0.99, true);
   }
 
   // ---------- selection / inspector ----------
@@ -828,8 +854,8 @@
   });
   document.getElementById('reset').addEventListener('click', ()=>{
     state.phi = -0.62; state.zoom = 1.0; state.exaggeration = 2.2;
-    document.getElementById('exag').value = 2.2;
-    document.getElementById('exagVal').textContent = '2.2×';
+    document.getElementById('exag').value = state.exaggeration;
+    document.getElementById('exagVal').textContent = state.exaggeration.toFixed(1)+'×';
     drawPlan(); drawIso();
   });
   document.getElementById('spin').addEventListener('click', ()=>{
@@ -877,6 +903,8 @@
     });
   })();
 
+  document.getElementById('exag').value = state.exaggeration;
+  document.getElementById('exagVal').textContent = state.exaggeration.toFixed(1)+'×';
   drawPlan(); drawIso(); updateInspector();
   // the readout starts at the map centre, so the EPSG:25832 frame is visible before any hover
   (function(){
