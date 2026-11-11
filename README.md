@@ -105,11 +105,17 @@ dependencies. `?mode=height` and `?mode=typology` switch the colouring, `?exag=0
 sets the vertical exaggeration, `?sel=<id>` and `?cell=<id>` open a given selection, and
 `Esc` clears it. Both panels are drawn from one payload, so a click, a hover and a cell
 selection are shared: the plan stays north-up, the 3-D compass turns with the orbit and
-prints the bearing. Legends, the north arrow or compass, the scale bar and the
-EPSG:25832 readout sit in a strip below each map rather than on top of it, so the canvas
-is never covered. The viewer runs a small cartographic self-test at load
+prints the bearing. The active footprint and cell are drawn in a signal magenta with a
+white halo — a hue absent from every base ramp — and the 3-D view pins the chosen
+building with a leader line so it stays findable inside a dense block. Legends, the
+north arrow or compass, the scale bar and the EPSG:25832 readout sit in a strip below
+each map rather than on top of it, so the canvas is never covered. The viewer runs a small cartographic self-test at load
 (`east → right`, `north → up`, in both projections) and exposes the result as
 `<html data-cartography="ok">`, which `make figures` asserts before taking screenshots.
+
+![The same building selected in both views](docs/assets/selection_view.png)
+*A shared selection (`?sel=36`): one click highlights the footprint in the plan and pins
+it in the 3-D view, with its 250 m cell framed in the same signal colour.*
 
 ## Pipeline
 
