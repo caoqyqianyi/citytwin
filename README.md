@@ -48,7 +48,7 @@ Three ideas drive the design:
 
 | Output | Path | Size / content |
 |---|---|---|
-| Self-contained 2D/3D viewer | `web/index.html` | 0.7 MB, zero external requests |
+| Self-contained 2D/3D viewer | `web/index.html` | 0.86 MB, zero external requests |
 | CityJSON 1.1 LoD1 model | `build/cityjson/esch_lod1.city.json` | 2 720 buildings, 0 open shells |
 | 3D Tiles 1.1 tileset + GLB | `build/3dtiles/` | 52 104 triangles, 2.8 MB |
 | OGC API Features | `citytwin serve` | collections `buildings`, `cells`, `green` |
