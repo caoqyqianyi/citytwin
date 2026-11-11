@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>citytwin — Esch-sur-Alzette digital twin</title>
+<style>
+  :root{
+    --ink:#1c1f23; --muted:#6a7076; --line:#e2e0da; --paper:#fbfaf7; --panel:#ffffff;
+    --accent:#1f4e79; --accent-soft:#e8eef5;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:-apple-system,"Helvetica Neue",Inter,Segoe UI,Roboto,sans-serif;
+    display:flex;flex-direction:column;min-height:100vh}
+  header{padding:18px 24px 14px;border-bottom:1px solid var(--line);background:var(--panel)}
+  .kicker{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);
+    font-weight:600;margin:0 0 6px}
+  h1{margin:0;font-size:23px;font-weight:650;letter-spacing:-.01em}
+  .sub{margin:6px 0 0;color:var(--muted);font-size:13px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .chip{background:var(--accent-soft);color:var(--accent);border-radius:999px;
+    padding:4px 10px;font-size:11.5px;font-weight:600;letter-spacing:.01em}
+  main{flex:1;display:grid;grid-template-columns:1.35fr 1fr;gap:14px;padding:14px 18px 8px;min-height:0}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;display:flex;
+    flex-direction:column;min-height:0;overflow:hidden}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:11px 14px 9px;border-bottom:1px solid var(--line)}
+  .panel-title{font-size:13px;font-weight:650}
+  .panel-note{font-size:11px;color:var(--muted)}
+  .canvas-wrap{position:relative;flex:1;min-height:0}
+  canvas{display:block;width:100%;height:100%}
+  .controls{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--muted)}
+  select,button{font:inherit;font-size:11.5px;border:1px solid var(--line);background:#fff;
+    color:var(--ink);border-radius:7px;padding:4px 8px;cursor:pointer}
+  button:hover{border-color:#c8c4ba}
+  .legend{position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,.94);
+    border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:11px;line-height:1.5}
+  .legend h4{margin:0 0 5px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .legend .row{display:flex;align-items:flex-start;gap:6px;max-width:250px;line-height:1.35}
+  .legend .row+.row{margin-top:3px}
+  .sw{width:16px;height:9px;border-radius:2px;display:inline-block}
+  footer{border-top:1px solid var(--line);padding:9px 20px;color:var(--muted);font-size:10.5px;
+    display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;background:var(--panel)}
+  .tip{position:fixed;pointer-events:none;background:#12161a;color:#fff;font-size:11px;
+    padding:7px 9px;border-radius:6px;opacity:0;transition:opacity .12s;max-width:250px;z-index:9;
+    line-height:1.45}
+  .tip strong{font-weight:650}
+  .hint{position:absolute;right:12px;bottom:12px;font-size:10.5px;color:var(--muted);
+    background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:6px;padding:4px 7px}
+</style>
+</head>
+<body>
+<header>
+  <p class="kicker">citytwin · geospatial digital twin</p>
+  <h1>Esch-sur-Alzette — building fabric and heat exposure</h1>
+  <p class="sub">LoD1 city model from OpenStreetMap footprints · height completion with calibrated uncertainty · 250 m exposure grid</p>
+  <div class="chips" id="chips"></div>
+</header>
+
+<main>
+  <section class="panel">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">Plan view</div>
+        <div class="panel-note">250 m cells · building footprints · green space</div>
+      </div>
+      <div class="controls">
+        <label>Colour
+          <select id="planMode">
+            <option value="hei">Heat exposure index</option>
+            <option value="height">Building height</option>
+            <option value="typology">Urban typology</option>
+          </select>
+        </label>
+      </div>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="plan"></canvas>
+      <div class="legend" id="planLegend"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">LoD1 3-D view</div>
+        <div class="panel-note">extruded footprints · same grid extent</div>
+      </div>
+      <div class="controls">
+        <label>Height <input id="exag" type="range" min="0.8" max="4" step="0.1" value="2.2"></label>
+        <button id="spin">Rotate</button>
+      </div>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="iso"></canvas>
+      <div class="legend" id="isoLegend"></div>
+      <div class="hint">drag to rotate</div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span id="foot-left"></span>
+  <span id="foot-right"></span>
+</footer>
+<div class="tip" id="tip"></div>
+
+<script id="payload" type="application/json">__DATA__</script>
+<script>
+(function(){
+  const DATA = JSON.parse(document.getElementById('payload').textContent);
+  const PLAN = document.getElementById('plan');
+  const ISO = document.getElementById('iso');
+  const TIP = document.getElementById('tip');
+  const planCtx = PLAN.getContext('2d');
+  const isoCtx = ISO.getContext('2d');
+
+  const HEI_RAMP = ['#fff5eb','#fdd0a2','#fd8d3c','#e6550d','#a63603'];
+  const HEIGHT_RAMP = ['#3f7f9f','#82b3a6','#e6e1c1','#dda968','#b04f3f'];
+  const TYPO_COLOURS = ['#4e79a7','#f28e2b','#59a14f','#b07aa1','#76b7b2','#edc948','#9c755f'];
+
+  let mode = 'hei';
+  let exaggeration = 2.2;
+  let rotation = 0.62;
+  let zoom = 1.0;
+  let hovered = -1;
+
+  const B = DATA.bounds; // [minx,miny,maxx,maxy] local metres
+  const WIDTH = B[2]-B[0], HEIGHT = B[3]-B[1];
+
+  // deep-link the colouring so screenshots and links are reproducible: ?mode=height
+  const params = new URLSearchParams(location.search);
+  const requestedMode = params.get('mode');
+  if(['hei','height','typology'].includes(requestedMode)){
+    mode = requestedMode;
+    document.getElementById('planMode').value = requestedMode;
+  }
+
+  function size(canvas){
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, Math.round(rect.width*dpr));
+    canvas.height = Math.max(1, Math.round(rect.height*dpr));
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    return {w:rect.width, h:rect.height};
+  }
+
+  function colourFor(value, ramp, min, max){
+    if(!isFinite(value)) return '#c9c6bf';
+    const t = Math.max(0, Math.min(1, (value-min)/(max-min||1)));
+    const idx = Math.min(ramp.length-1, Math.floor(t*ramp.length));
+    return ramp[idx];
+  }
+
+  function hexToRgb(hex){
+    const n = parseInt(hex.slice(1),16);
+    return [(n>>16)&255,(n>>8)&255,n&255];
+  }
+  function shade(hex, factor){
+    const [r,g,b] = hexToRgb(hex);
+    return 'rgb('+Math.round(r*factor)+','+Math.round(g*factor)+','+Math.round(b*factor)+')';
+  }
+
+  function extent(){
+    const sx = Math.min(900/ (WIDTH||1), 640/(HEIGHT||1));
+    return sx;
+  }
+
+  // ---------------- plan view ----------------
+  function planTransform(w,h){
+    const pad = 26;
+    const s = Math.min((w-2*pad)/WIDTH, (h-2*pad)/HEIGHT) * zoom;
+    const ox = (w - WIDTH*s)/2, oy = (h - HEIGHT*s)/2;
+    return {
+      x: x => ox + (x-B[0])*s,
+      y: y => h - oy - (y-B[1])*s,
+      s
+    };
+  }
+
+  function drawPlan(){
+    const {w,h} = size(PLAN);
+    planCtx.clearRect(0,0,w,h);
+    planCtx.fillStyle = '#f6f4ef';
+    planCtx.fillRect(0,0,w,h);
+    const T = planTransform(w,h);
+
+    // grid cells as exposure surface
+    for(const cell of DATA.cells){
+      const pts = cell.r.map(p => [T.x(p[0]), T.y(p[1])]);
+      planCtx.beginPath();
+      pts.forEach((p,i) => i ? planCtx.lineTo(p[0],p[1]) : planCtx.moveTo(p[0],p[1]));
+      planCtx.closePath();
+      if(mode === 'hei'){
+        planCtx.globalAlpha = 0.55;
+        planCtx.fillStyle = colourFor(cell.hei, HEI_RAMP, DATA.meta.hei_range[0], DATA.meta.hei_range[1]);
+        planCtx.fill();
+        planCtx.globalAlpha = 1;
+      }
+      planCtx.strokeStyle = 'rgba(120,115,105,.35)';
+      planCtx.lineWidth = 0.8;
+      planCtx.stroke();
+      if((cell.hp || 0) >= 0.8){
+        planCtx.strokeStyle = '#8c2d04';
+        planCtx.lineWidth = 2;
+        planCtx.stroke();
+      }
+    }
+
+    // green areas
+    planCtx.fillStyle = '#cfe4c4';
+    planCtx.globalAlpha = 0.85;
+    for(const poly of DATA.green){
+      planCtx.beginPath();
+      poly.forEach((p,i) => { const X=T.x(p[0]), Y=T.y(p[1]); i?planCtx.lineTo(X,Y):planCtx.moveTo(X,Y); });
+      planCtx.closePath();
+      planCtx.fill();
+    }
+    planCtx.globalAlpha = 1;
+
+    // streets
+    planCtx.strokeStyle = '#dedbd4';
+    planCtx.lineWidth = Math.max(1, T.s*4);
+    for(const line of DATA.streets){
+      planCtx.beginPath();
+      line.forEach((p,i) => { const X=T.x(p[0]), Y=T.y(p[1]); i?planCtx.lineTo(X,Y):planCtx.moveTo(X,Y); });
+      planCtx.stroke();
+    }
+
+    // buildings
+    for(let i=0;i<DATA.buildings.length;i++){
+      const b = DATA.buildings[i];
+      const pts = b.r.map(p => [T.x(p[0]), T.y(p[1])]);
+      planCtx.beginPath();
+      pts.forEach((p,k) => k?planCtx.lineTo(p[0],p[1]):planCtx.moveTo(p[0],p[1]));
+      planCtx.closePath();
+      let fill = '#454c59';
+      if(mode === 'height') fill = colourFor(b.h, HEIGHT_RAMP, DATA.meta.height_range[0], DATA.meta.height_range[1]);
+      else if(mode === 'typology') fill = TYPO_COLOURS[b.t % TYPO_COLOURS.length];
+      planCtx.fillStyle = fill;
+      planCtx.globalAlpha = mode === 'hei' ? 0.86 : 0.94;
+      planCtx.fill();
+      planCtx.globalAlpha = 1;
+      if(i === hovered){
+        planCtx.strokeStyle = '#111'; planCtx.lineWidth = 1.6; planCtx.stroke();
+      } else if(T.s > 4){
+        planCtx.strokeStyle = 'rgba(255,255,255,.55)'; planCtx.lineWidth = 0.5; planCtx.stroke();
+      }
+    }
+    drawScaleBar(w, h, T);
+    drawLegend();
+  }
+
+  function drawScaleBar(w, h, T){
+    const metres = T.s*100 > 120 ? 100 : 50;
+    const px = metres*T.s;
+    const x0 = w - 26 - px, y0 = h - 30;
+    planCtx.strokeStyle = 'rgba(28,31,35,.75)';
+    planCtx.lineWidth = 1.4;
+    planCtx.beginPath();
+    planCtx.moveTo(x0, y0); planCtx.lineTo(x0+px, y0);
+    planCtx.moveTo(x0, y0-4); planCtx.lineTo(x0, y0+4);
+    planCtx.moveTo(x0+px, y0-4); planCtx.lineTo(x0+px, y0+4);
+    planCtx.stroke();
+    planCtx.fillStyle = 'rgba(28,31,35,.8)';
+    planCtx.font = '10px -apple-system,Helvetica Neue,Inter,sans-serif';
+    planCtx.textAlign = 'center';
+    planCtx.fillText(metres + ' m', x0+px/2, y0-8);
+    planCtx.textAlign = 'left';
+
+    // north arrow
+    const nx = w - 34, ny = 30;
+    planCtx.beginPath();
+    planCtx.moveTo(nx, ny-14); planCtx.lineTo(nx-6, ny+4); planCtx.lineTo(nx, ny); planCtx.lineTo(nx+6, ny+4);
+    planCtx.closePath();
+    planCtx.fillStyle = 'rgba(28,31,35,.65)';
+    planCtx.fill();
+    planCtx.fillText('N', nx-3, ny+16);
+  }
+
+  function drawLegend(){
+    const el = document.getElementById('planLegend');
+    if(mode === 'typology'){
+      el.innerHTML = '<h4>Urban typology</h4>' + DATA.meta.typologies.map((name,i) =>
+        '<div class="row"><span class="sw" style="background:'+TYPO_COLOURS[i%TYPO_COLOURS.length]+'"></span>'+
+        name+'</div>').join('');
+      return;
+    }
+    const ramp = mode === 'height' ? HEIGHT_RAMP : HEI_RAMP;
+    const range = mode === 'height' ? DATA.meta.height_range : DATA.meta.hei_range;
+    const label = mode === 'height' ? 'Building height (m)' : 'Heat exposure index (0–100)';
+    el.innerHTML = '<h4>'+label+'</h4>' + ramp.map((c,i) => {
+      const lo = range[0] + (range[1]-range[0])*i/ramp.length;
+      return '<div class="row"><span class="sw" style="background:'+c+'"></span>'+lo.toFixed(0)+'</div>';
+    }).join('');
+  }
+
+  // ---------------- iso view ----------------
+  function isoTransform(w,h){
+    const pad = 40;
+    const hmax = DATA.meta.height_range[1];
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for(const x of [B[0],B[2]]) for(const y of [B[1],B[3]]) for(const z of [0, hmax]){
+      const p = project(x,y,z);
+      minX = Math.min(minX, p[0]); maxX = Math.max(maxX, p[0]);
+      minY = Math.min(minY, p[1]); maxY = Math.max(maxY, p[1]);
+    }
+    const s = Math.min((w-2*pad)/(maxX-minX||1), (h-2*pad)/(maxY-minY||1))*zoom*1.12;
+    const ox = (w - (maxX-minX)*s)/2 - minX*s;
+    const oy = (h - (maxY-minY)*s)/2 - minY*s;
+    return {s, X: sx => ox + sx*s, Y: sy => oy + sy*s};
+  }
+
+  let cx = (B[0]+B[2])/2, cy = (B[1]+B[3])/2;
+
+  function project(x,y,z){
+    const dx = x-cx, dy = y-cy;
+    const rx = dx*Math.cos(rotation) - dy*Math.sin(rotation);
+    const ry = dx*Math.sin(rotation) + dy*Math.cos(rotation);
+    return [ (rx-ry)*0.866, (rx+ry)*0.5 - z*exaggeration ];
+  }
+
+  function drawIso(){
+    const {w,h} = size(ISO);
+    isoCtx.clearRect(0,0,w,h);
+    isoCtx.fillStyle = '#f4f2ec';
+    isoCtx.fillRect(0,0,w,h);
+    const T = isoTransform(w,h);
+
+    const order = DATA.buildings.map((b,i)=>({b,i,
+      depth: (function(){const p=project(b.cx,b.cy,0); return p[1];})()
+    })).sort((a,b)=>a.depth-b.depth);
+
+    // ground: the grid itself, projected flat
+    for(const cell of DATA.cells){
+      isoCtx.beginPath();
+      cell.r.forEach((p,j)=>{ const q=project(p[0],p[1],0); const X=T.X(q[0]), Y=T.Y(q[1]); j?isoCtx.lineTo(X,Y):isoCtx.moveTo(X,Y); });
+      isoCtx.closePath();
+      isoCtx.fillStyle = (cell.hp||0) >= 0.8 ? '#f0dccb' : '#eae7de';
+      isoCtx.fill();
+      isoCtx.strokeStyle = 'rgba(120,115,105,.25)';
+      isoCtx.lineWidth = 0.6;
+      isoCtx.stroke();
+    }
+
+    for(const item of order){
+      const b = item.b;
+      const ring = b.r;
+      const base = ring.map(p => project(p[0],p[1],0));
+      const top = ring.map(p => project(p[0],p[1],b.h));
+
+      const colour = colourFor(b.h, HEIGHT_RAMP, DATA.meta.height_range[0], DATA.meta.height_range[1]);
+
+      // walls: draw the two most visible faces by depth order
+      const faces = [];
+      for(let k=0;k<ring.length;k++){
+        const k2 = (k+1)%ring.length;
+        const depth = (base[k][1]+base[k2][1])*0.5;
+        const angle = Math.atan2(base[k2][1]-base[k][1], base[k2][0]-base[k][0]);
+        faces.push({k, k2, depth, angle});
+      }
+      faces.sort((a,b)=>a.depth-b.depth);
+      for(const face of faces){
+        const q = [base[face.k], base[face.k2], top[face.k2], top[face.k]];
+        const light = 0.62 + 0.3*Math.abs(Math.cos(face.angle - 0.8));
+        isoCtx.beginPath();
+        q.forEach((p,j)=>{ const X=T.X(p[0]), Y=T.Y(p[1]); j?isoCtx.lineTo(X,Y):isoCtx.moveTo(X,Y); });
+        isoCtx.closePath();
+        isoCtx.fillStyle = shade(colour, light);
+        isoCtx.fill();
+      }
+      // roof
+      isoCtx.beginPath();
+      top.forEach((p,j)=>{ const X=T.X(p[0]), Y=T.Y(p[1]); j?isoCtx.lineTo(X,Y):isoCtx.moveTo(X,Y); });
+      isoCtx.closePath();
+      isoCtx.fillStyle = shade(colour, 1.06);
+      isoCtx.fill();
+      isoCtx.strokeStyle = 'rgba(30,30,30,.18)';
+      isoCtx.lineWidth = 0.4;
+      isoCtx.stroke();
+    }
+
+    const el = document.getElementById('isoLegend');
+    const ramp = HEIGHT_RAMP;
+    const range = DATA.meta.height_range;
+    el.innerHTML = '<h4>Building height (m)</h4>' +
+      ramp.map((c,i)=>'<div class="row"><span class="sw" style="background:'+c+'"></span>'+
+        (range[0]+(range[1]-range[0])*i/ramp.length).toFixed(0)+'</div>').join('');
+  }
+
+  // ---------------- interaction ----------------
+  function pointInRing(px,py,ring){
+    let inside = false;
+    for(let i=0,j=ring.length-1;i<ring.length;j=i++){
+      const xi=ring[i][0], yi=ring[i][1], xj=ring[j][0], yj=ring[j][1];
+      const inter = ((yi>py)!==(yj>py)) && (px < (xj-xi)*(py-yi)/((yj-yi)||1e-9)+xi);
+      if(inter) inside = !inside;
+    }
+    return inside;
+  }
+
+  PLAN.addEventListener('mousemove', ev => {
+    const rect = PLAN.getBoundingClientRect();
+    const {w,h} = {w:rect.width,h:rect.height};
+    const T = planTransform(w,h);
+    const px = ev.clientX-rect.left, py = ev.clientY-rect.top;
+    let found = -1;
+    for(let i=0;i<DATA.buildings.length;i++){
+      const b = DATA.buildings[i];
+      const b0 = b.bbox;
+      const x0 = T.x(b0[0]), y0 = T.y(b0[3]), x1 = T.x(b0[2]), y1 = T.y(b0[1]);
+      if(px<x0||px>x1||py>y0||py<y1) continue;
+      if(pointInRing(px,py,b.r.map(p=>[T.x(p[0]),T.y(p[1])]))) { found = i; break; }
+    }
+    if(found !== hovered){ hovered = found; drawPlan(); }
+    if(found >= 0){
+      const b = DATA.buildings[found];
+      TIP.style.opacity = 1;
+      TIP.style.left = (ev.clientX+14)+'px';
+      TIP.style.top = (ev.clientY+14)+'px';
+      TIP.innerHTML = '<strong>'+b.id+'</strong><br>'+b.k+'<br>height '+
+        b.h.toFixed(1)+' m ('+b.p+')<br>exposure '+(isFinite(b.hei)?b.hei.toFixed(0):'–')+
+        '<br>'+b.tn;
+    } else {
+      TIP.style.opacity = 0;
+    }
+  });
+  PLAN.addEventListener('mouseleave', ()=>{ TIP.style.opacity = 0; hovered=-1; drawPlan(); });
+
+  let dragging = false, lastX = 0;
+  ISO.addEventListener('mousedown', e => { dragging = true; lastX = e.clientX; });
+  window.addEventListener('mouseup', ()=> dragging = false);
+  window.addEventListener('mousemove', e => {
+    if(!dragging) return;
+    rotation += (e.clientX-lastX)*0.01;
+    lastX = e.clientX;
+    drawIso();
+  });
+  ISO.addEventListener('wheel', e => {
+    e.preventDefault();
+    zoom = Math.max(0.6, Math.min(2.4, zoom + (e.deltaY>0?-0.08:0.08)));
+    drawPlan(); drawIso();
+  }, {passive:false});
+
+  document.getElementById('planMode').addEventListener('change', e => {
+    mode = e.target.value; drawPlan(); drawIso();
+  });
+  document.getElementById('exag').addEventListener('input', e => {
+    exaggeration = parseFloat(e.target.value); drawIso();
+  });
+  document.getElementById('spin').addEventListener('click', () => {
+    const id = setInterval(()=>{ rotation += 0.02; drawIso(); }, 30);
+    setTimeout(()=>clearInterval(id), 1800);
+  });
+
+  window.addEventListener('resize', ()=>{ drawPlan(); drawIso(); });
+
+  // header chips + footer
+  document.getElementById('chips').innerHTML = [
+    DATA.meta.buildings.toLocaleString()+' footprints',
+    DATA.meta.cells+' grid cells',
+    DATA.meta.labelled+' height labels ('+DATA.meta.label_coverage+'%)',
+    'interval ±'+DATA.meta.interval+' m @80%',
+    DATA.meta.generated
+  ].map(t=>'<span class="chip">'+t+'</span>').join('');
+  document.getElementById('foot-left').textContent =
+    'Data © OpenStreetMap contributors (ODbL 1.0) · CityJSON 1.1 + 3D Tiles exported · ' +
+    'height strategy: ' + DATA.meta.strategy;
+  document.getElementById('foot-right').textContent =
+    'citytwin 0.5.0 · provenance ' + DATA.meta.provenance.slice(0,16) + '…';
+
+  drawPlan(); drawIso();
+})();
+</script>
+</body>
+</html>

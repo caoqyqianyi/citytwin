@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "citytwin: an auditable geospatial digital twin toolkit"
+abstract: "Builds a LoD1 city model from OpenStreetMap footprints, completes missing building heights with a calibrated rule and conformal intervals, propagates that uncertainty into an urban heat-exposure index, and publishes the result as CityJSON 1.1, 3D Tiles 1.1 and an OGC API Features service, with a read-only tool-using agent and PROV-JSON provenance."
+version: 0.5.0
+date-released: 2026-11-11
+license: MIT
+type: software
+authors:
+  - family-names: Cao
+    given-names: Qianyi
+    email: caoqy.qianyi@gmail.com
+repository-code: "https://github.com/caoqyqianyi/citytwin"
+keywords:
+  - geospatial
+  - digital twin
+  - CityJSON
+  - 3D Tiles
+  - OGC API
+  - urban heat
+  - GeoAI
+  - provenance
+references:
+  - type: dataset
+    title: "OpenStreetMap contributors — ODbL 1.0"
+    url: "https://www.openstreetmap.org/copyright"
