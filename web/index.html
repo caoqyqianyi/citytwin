@@ -10,7 +10,7 @@
     --line:#e3e0d8; --line-strong:#d2cec4;
     --paper:#faf8f3; --panel:#fffefb; --canvas:#f5f2eb;
     --accent:#1d4e79; --accent-2:#b4552d; --accent-soft:#eaf0f6;
-    --green:#bcd8b6; --signal:#e6007a;
+    --green:#bcd8b6; --signal:#8e24aa;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -25,7 +25,11 @@
     font-weight:650;margin:0 0 7px;display:flex;align-items:center;gap:8px}
   .kicker::before{content:"";width:16px;height:1px;background:var(--accent);opacity:.6}
   h1{margin:0;font-size:25px;font-weight:620;letter-spacing:-.015em;line-height:1.18}
-  .sub{margin:7px 0 0;color:var(--muted);font-size:12.5px;max-width:62ch;line-height:1.55}
+  .lede{margin:9px 0 0;padding:0 0 0 16px;max-width:70ch;color:var(--muted);
+    font-size:12.2px;line-height:1.5}
+  .lede li{margin:2px 0}
+  .lede li::marker{color:var(--line-strong)}
+  .lede b{color:var(--ink-soft);font-weight:640}
   .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:13px}
   .chip{background:#fff;color:var(--ink-soft);border:1px solid var(--line);
     border-radius:999px;padding:3px 9px;font-size:10.8px;font-weight:520;letter-spacing:.01em}
@@ -35,7 +39,9 @@
     background:linear-gradient(180deg,#fff,#fcfaf5);padding:11px 13px 12px;
     box-shadow:0 1px 0 rgba(24,28,33,.03)}
   .inspector h2{margin:0 0 7px;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
-    color:var(--muted);font-weight:650;display:flex;justify-content:space-between;align-items:center}
+    color:var(--muted);font-weight:650;display:flex;align-items:center;gap:6px}
+  .inspector h2::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--signal);flex:0 0 8px}
+  .inspector h2 button{margin-left:auto}
   #inspector.sel{box-shadow:inset 3px 0 0 var(--signal)}
   .inspector h2 button{border:none;background:none;color:var(--faint);font-size:10.5px;
     padding:0;cursor:pointer;letter-spacing:0;text-transform:none}
@@ -47,6 +53,18 @@
   .kv dd strong{color:var(--ink);font-weight:640}
   .inspect-id{font-size:13px;font-weight:650;margin:0 0 8px;letter-spacing:-.01em}
   .inspect-id span{color:var(--faint);font-weight:500;font-size:11px;margin-left:6px}
+  .facts{list-style:none;margin:0;padding:0;font-size:11.5px;line-height:1.45}
+  .facts li{display:grid;grid-template-columns:62px 1fr;gap:8px;padding:4px 0;
+    border-bottom:1px solid #f2efe8}
+  .facts li:last-child{border-bottom:0}
+  .facts .k{color:var(--muted)}
+  .facts .v{color:var(--ink-soft);font-variant-numeric:tabular-nums}
+  .facts .v strong{color:var(--ink);font-weight:640}
+  .hints{margin:6px 0 0;padding:0 0 0 14px;color:var(--muted);font-size:11.5px;
+    line-height:1.5}
+  .hints li{margin:2px 0}
+  .hints li::marker{color:var(--line-strong)}
+  .empty-lead{margin:0;color:var(--ink-soft);font-size:11.8px;font-weight:600}
 
   main{flex:1;display:grid;grid-template-columns:1.32fr 1fr;gap:16px;padding:16px 20px 10px;min-height:0}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;display:flex;
@@ -114,12 +132,23 @@
   <div class="masthead">
     <p class="kicker">citytwin · geospatial digital twin</p>
     <h1>Esch-sur-Alzette — building fabric and heat exposure</h1>
-    <p class="sub">LoD1 city model from OpenStreetMap footprints · heights completed with calibrated uncertainty · 250 m exposure grid. The two views share one selection: click a footprint or a cell in either map — magenta marks the current pick.</p>
+    <ul class="lede">
+      <li><b>Fabric</b> — 2,720 OpenStreetMap footprints as LoD1 massing; unknown heights completed by a published rule, ±3 m at 80%.</li>
+      <li><b>Exposure</b> — heat index 0–100 over 30 cells of 250 m; a hotspot is hot in at least 80% of 200 Monte Carlo draws.</li>
+      <li><b>Selection</b> — one shared state: pick a footprint or a cell in either map, and both views outline it in violet.</li>
+    </ul>
     <div class="chips" id="chips"></div>
   </div>
   <aside class="inspector" id="inspector">
     <h2>Selection <button id="clearSel" hidden>clear · esc</button></h2>
-    <div id="inspectBody"><p class="empty">Nothing selected. Click a building in the plan or the 3-D view; click a cell background to select a grid cell.</p></div>
+    <div id="inspectBody">
+      <p class="empty-lead">Nothing selected yet</p>
+      <ul class="hints">
+        <li>Click a building in either map.</li>
+        <li>Click a cell background to select the 250 m cell.</li>
+        <li>Press <b>Esc</b>, or clear above, to reset.</li>
+      </ul>
+    </div>
   </aside>
 </header>
 
@@ -208,7 +237,7 @@
   const HEIGHT_RAMP = ['#356f88','#5f9d90','#a9b48a','#d19a52','#a84430'];
   const TYPO_COLOURS = ['#4e79a7','#f28e2b','#59a14f','#b07aa1','#76b7b2','#edc948','#9c755f'];
   const ACCENT = '#b4552d';
-  const SIGNAL = '#e6007a';      // selection only — no base layer uses magenta
+  const SIGNAL = '#8e24aa';      // selection only — a violet no base ramp uses
   const INK = '#191d22';
 
   const state = {
@@ -427,11 +456,11 @@
       pts.forEach((p,k)=> k?planCtx.lineTo(p[0],p[1]):planCtx.moveTo(p[0],p[1]));
       planCtx.closePath();
       if(selected >= 0){
-        planCtx.fillStyle = 'rgba(230,0,122,.22)'; planCtx.fill();
+        planCtx.fillStyle = 'rgba(142,36,170,.18)'; planCtx.fill();
         planCtx.strokeStyle = 'rgba(255,255,255,.96)'; planCtx.lineWidth = 5.2; planCtx.stroke();
         planCtx.strokeStyle = SIGNAL; planCtx.lineWidth = 2.7; planCtx.stroke();
       } else {
-        planCtx.strokeStyle = 'rgba(230,0,122,.85)'; planCtx.lineWidth = 1.4; planCtx.stroke();
+        planCtx.strokeStyle = 'rgba(142,36,170,.85)'; planCtx.lineWidth = 1.4; planCtx.stroke();
       }
     }
 
@@ -613,7 +642,12 @@
       isoCtx.ellipse(px, py, 8, 4, 0, 0, Math.PI*2);
       isoCtx.strokeStyle = 'rgba(255,255,255,.95)'; isoCtx.lineWidth = 2.6; isoCtx.stroke();
       isoCtx.strokeStyle = alpha(SIGNAL,.95); isoCtx.lineWidth = 1.6; isoCtx.stroke();
-      // pin above the roof: easy to spot in a dense block
+      // reticle on the roof plus a pin above it: easy to spot in a dense block
+      isoCtx.beginPath();
+      isoCtx.ellipse(rx, ry, 11, 5.5, 0, 0, Math.PI*2);
+      isoCtx.strokeStyle = 'rgba(255,255,255,.95)'; isoCtx.lineWidth = 3.2; isoCtx.stroke();
+      isoCtx.strokeStyle = alpha(SIGNAL,.95); isoCtx.lineWidth = 1.8; isoCtx.stroke();
+      // pin above the roof
       isoCtx.beginPath(); isoCtx.moveTo(rx, ry-5); isoCtx.lineTo(rx, ry-30);
       isoCtx.strokeStyle = 'rgba(255,255,255,.95)'; isoCtx.lineWidth = 4; isoCtx.stroke();
       isoCtx.strokeStyle = SIGNAL; isoCtx.lineWidth = 2; isoCtx.stroke();
@@ -721,13 +755,13 @@
       clear.hidden = false;
       body.innerHTML =
         '<p class="inspect-id">Building '+b.id+'<span>OSM</span></p>' +
-        '<dl class="kv">' +
-        '<dt>Class</dt><dd>'+b.k+'</dd>' +
-        '<dt>Height</dt><dd><strong>'+b.h.toFixed(1)+' m</strong> · '+b.p+'</dd>' +
-        '<dt>Exposure</dt><dd>'+(isFinite(b.hei)?b.hei.toFixed(0):'–')+' / 100</dd>' +
-        '<dt>Cell</dt><dd>'+b.cid+'</dd>' +
-        '<dt>Typology</dt><dd>'+b.tn+'</dd>' +
-        '</dl>';
+        '<ul class="facts">' +
+        '<li><span class="k">Height</span><span class="v"><strong>'+b.h.toFixed(1)+' m</strong> · '+b.p+'</span></li>' +
+        '<li><span class="k">Exposure</span><span class="v"><strong>'+(isFinite(b.hei)?b.hei.toFixed(0):'–')+'</strong> / 100</span></li>' +
+        '<li><span class="k">Cell</span><span class="v">'+b.cid+'</span></li>' +
+        '<li><span class="k">Typology</span><span class="v">'+b.tn+'</span></li>' +
+        '<li><span class="k">Class</span><span class="v">'+b.k+'</span></li>' +
+        '</ul>';
       return;
     }
     if(state.selC >= 0){
@@ -735,15 +769,21 @@
       clear.hidden = false;
       body.innerHTML =
         '<p class="inspect-id">Cell '+cell.id+'<span>250 m grid</span></p>' +
-        '<dl class="kv">' +
-        '<dt>Exposure</dt><dd><strong>'+cell.hei.toFixed(0)+'</strong> / 100</dd>' +
-        '<dt>Hotspot</dt><dd>'+(isFinite(cell.hp)?Math.round(cell.hp*100)+'% of draws':'–')+'</dd>' +
-        '<dt>Buildings</dt><dd>'+cellBuildings(state.selC)+'</dd>' +
-        '</dl>';
+        '<ul class="facts">' +
+        '<li><span class="k">Exposure</span><span class="v"><strong>'+cell.hei.toFixed(0)+'</strong> / 100</span></li>' +
+        '<li><span class="k">Hotspot</span><span class="v">'+(isFinite(cell.hp)?Math.round(cell.hp*100)+'% of draws':'–')+'</span></li>' +
+        '<li><span class="k">Buildings</span><span class="v">'+cellBuildings(state.selC)+'</span></li>' +
+        '</ul>';
       return;
     }
     clear.hidden = true;
-    body.innerHTML = '<p class="empty">Nothing selected. Click a building in the plan or the 3-D view; click a cell background to select a grid cell.</p>';
+    body.innerHTML =
+      '<p class="empty-lead">Nothing selected yet</p>' +
+      '<ul class="hints">' +
+      '<li>Click a building in either map.</li>' +
+      '<li>Click a cell background to select the 250 m cell.</li>' +
+      '<li>Press <b>Esc</b>, or clear above, to reset.</li>' +
+      '</ul>';
   }
 
   function showTip(b, ev){
