@@ -12,7 +12,7 @@ The study area is **Esch-sur-Alzette (Luxembourg)**, 2.5 km from the LIST Belvau
 campus: 187.5 ha, 2 720 footprints, a 250 m analysis grid.
 
 [![CI](https://github.com/caoqyqianyi/citytwin/actions/workflows/ci.yml/badge.svg)](https://github.com/caoqyqianyi/citytwin/actions/workflows/ci.yml)
-[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-1f4e79)](pyproject.toml)
+[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-1f4e79)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/code-MIT-1f4e79)](LICENSE)
 [![Data: ODbL](https://img.shields.io/badge/data-ODbL%201.0-6a7076)](https://opendatacommons.org/licenses/odbl/1-0/)
 [![CityJSON 1.1](https://img.shields.io/badge/CityJSON-1.1-6a7076)](docs/standards.md)
