@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 from citytwin.exporters import (
     buildings_to_3dtiles,
@@ -50,7 +51,11 @@ def test_viewer_is_offline(tmp_path, simple_buildings, simple_cells, simple_gree
     html = path.read_text(encoding="utf-8")
     assert "__DATA__" not in html
     assert '"buildings"' in html
-    # no external requests: no CDN, no fonts, no tiles
-    for forbidden in ("https://", "http://", "cdn.", "unpkg", "jsdelivr"):
+    # no external resources: no CDN, no fonts, no tiles. Attribution anchors are
+    # plain links — they cost nothing until a reader clicks them.
+    assert not re.search(
+        r'<(?:script|img|iframe|link)\b[^>]*(?:src|href)=["\']https?://', html
+    )
+    for forbidden in ("cdn.", "unpkg", "jsdelivr", "@import", "url(http"):
         assert forbidden not in html
     assert "Esch-sur-Alzette" in html

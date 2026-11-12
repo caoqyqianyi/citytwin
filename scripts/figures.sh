@@ -30,8 +30,8 @@ HEIGHT=${HEIGHT:-940}
 SCALE=${SCALE:-2}
 
 shoot() {
-  local mode="$1" target="$2" url="file://$PWD/web/index.html"
-  if [ -n "$mode" ]; then url="$url?mode=$mode"; fi
+  local query="$1" target="$2" url="file://$PWD/web/index.html"
+  if [ -n "$query" ]; then url="$url?$query"; fi
   "$CHROME" --headless=new --disable-gpu --hide-scrollbars \
     --force-device-scale-factor="$SCALE" --window-size="$WIDTH,$HEIGHT" \
     --virtual-time-budget=8000 \
@@ -53,11 +53,14 @@ fi
 rm -f "$DOM"
 
 shoot "" "$OUT/plan_view.png"
-shoot typology "$OUT/typology_view.png"
+shoot "mode=typology" "$OUT/typology_view.png"
+shoot "mode=height&exag=3.2&sel=36" "$OUT/height_view.png"
+shoot "sel=36" "$OUT/selection_view.png"
 
 # keep README images light enough for GitHub
 if command -v sips >/dev/null 2>&1; then
-  for f in "$OUT/plan_view.png" "$OUT/typology_view.png"; do
+  for f in "$OUT/plan_view.png" "$OUT/typology_view.png" \
+           "$OUT/height_view.png" "$OUT/selection_view.png"; do
     sips --resampleWidth 1600 "$f" >/dev/null
   done
 fi

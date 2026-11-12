@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>citytwin — Esch-sur-Alzette digital twin</title>
+<title>citytwin — geospatial digital twin of Esch-sur-Alzette</title>
 <style>
   :root{
     --ink:#191d22; --ink-soft:#3c434c; --muted:#6c737b; --faint:#98a0a8;
@@ -24,12 +24,22 @@
   .kicker{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);
     font-weight:650;margin:0 0 7px;display:flex;align-items:center;gap:8px}
   .kicker::before{content:"";width:16px;height:1px;background:var(--accent);opacity:.6}
-  h1{margin:0;font-size:25px;font-weight:620;letter-spacing:-.015em;line-height:1.18}
+  .brandline{display:flex;align-items:flex-end;gap:10px;margin:1px 0 0}
+  .brand{font-size:36px;font-weight:700;letter-spacing:-.03em;line-height:1;
+    color:var(--ink)}
+  .brand-tag{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--accent);font-weight:650;line-height:1.3;padding:0 0 2px 10px;
+    border-left:1px solid var(--line-strong);white-space:nowrap}
+  h1{margin:6px 0 0;font-size:17px;font-weight:560;letter-spacing:-.005em;
+    line-height:1.25;color:var(--ink-soft)}
   .lede{margin:9px 0 0;padding:0 0 0 16px;max-width:70ch;color:var(--muted);
     font-size:12.2px;line-height:1.5}
   .lede li{margin:2px 0}
   .lede li::marker{color:var(--line-strong)}
   .lede b{color:var(--ink-soft);font-weight:640}
+  .source{margin:7px 0 0;font-size:10.6px;line-height:1.5;color:var(--faint)}
+  .source a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--line-strong)}
+  .source a:hover{color:var(--ink-soft)}
   .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:13px}
   .chip{background:#fff;color:var(--ink-soft);border:1px solid var(--line);
     border-radius:999px;padding:3px 9px;font-size:10.8px;font-weight:520;letter-spacing:.01em}
@@ -109,9 +119,11 @@
   .foot-crs{font-size:9.4px;letter-spacing:.06em;color:var(--faint);white-space:nowrap}
   #bearing{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 
-  footer{border-top:1px solid var(--line);padding:8px 22px;color:var(--muted);font-size:10.4px;
+  footer{border-top:1px solid var(--line);padding:8px 22px;color:var(--muted);font-size:10.8px;
     display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;background:var(--panel)}
   footer span{white-space:nowrap}
+  footer a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--line-strong)}
+  footer a:hover{color:var(--ink)}
   #coords{font-variant-numeric:tabular-nums;color:var(--ink-soft)}
 
   .tip{position:fixed;pointer-events:none;background:#14181d;color:#fff;font-size:10.8px;
@@ -130,13 +142,18 @@
 <body>
 <header>
   <div class="masthead">
-    <p class="kicker">citytwin · geospatial digital twin</p>
-    <h1>Esch-sur-Alzette — building fabric and heat exposure</h1>
+    <p class="kicker">Esch-sur-Alzette · Luxembourg</p>
+    <div class="brandline">
+      <span class="brand">citytwin</span>
+      <span class="brand-tag">geospatial<br>digital twin</span>
+    </div>
+    <h1>Building fabric and heat exposure, in plan and LoD1 3-D</h1>
     <ul class="lede">
-      <li><b>Fabric</b> — 2,720 OpenStreetMap footprints as LoD1 massing; unknown heights completed by a published rule, ±3 m at 80%.</li>
-      <li><b>Exposure</b> — heat index 0–100 over 30 cells of 250 m; a hotspot is hot in at least 80% of 200 Monte Carlo draws.</li>
-      <li><b>Selection</b> — one shared state: pick a footprint or a cell in either map, and both views outline it in violet.</li>
+      <li><b>Fabric</b> — 2,720 OSM footprints as LoD1; missing heights by a published rule, ±3 m at 80%.</li>
+      <li><b>Exposure</b> — heat index 0–100 on 30 × 250 m cells; hotspot = ≥80% of 200 draws.</li>
+      <li><b>Selection</b> — one shared state; both maps outline the pick in violet.</li>
     </ul>
+    <p class="source">Data: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a>, ODbL 1.0 · OSM API 0.6 extract · heights: rule baseline · no proprietary data.</p>
     <div class="chips" id="chips"></div>
   </div>
   <aside class="inspector" id="inspector">
@@ -940,8 +957,9 @@
     DATA.meta.crs_metric,
     DATA.meta.generated
   ].map(t=>'<span class="chip">'+t+'</span>').join('');
-  document.getElementById('foot-left').textContent =
-    '© OpenStreetMap contributors (ODbL 1.0) · CityJSON 1.1 · 3D Tiles 1.1 · height: '+DATA.meta.strategy;
+  document.getElementById('foot-left').innerHTML =
+    '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a>' +
+    ' · ODbL 1.0 · CityJSON 1.1 · 3D Tiles 1.1 · heights: '+DATA.meta.strategy;
   document.getElementById('foot-right').textContent =
     'citytwin 0.5.0 · ' + (DATA.meta.provenance
       ? 'provenance ' + DATA.meta.provenance.slice(0,16) + '…'

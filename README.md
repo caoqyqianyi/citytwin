@@ -2,6 +2,12 @@
 
 **An auditable geospatial digital twin toolkit — footprints in, standards out.**
 
+**▶ Interactive demo — [caoqyqianyi.github.io/citytwin](https://caoqyqianyi.github.io/citytwin/)**  
+[![Live demo](https://img.shields.io/badge/open%20the%203D%20twin-live%20demo-8e24aa?style=for-the-badge)](https://caoqyqianyi.github.io/citytwin/)  
+Plan and LoD1 3-D side by side, three colour modes, vertical exaggeration, linked
+selection. The viewer is also in the repository at [`web/index.html`](web/index.html)
+and runs offline.
+
 `citytwin` builds a LoD1 city model from OpenStreetMap footprints, completes missing
 building heights with a calibrated rule, propagates that uncertainty into an urban
 heat-exposure index, and publishes the result through CityJSON, 3D Tiles and an
@@ -10,6 +16,11 @@ by calling audited queries — never by inventing numbers.
 
 The study area is **Esch-sur-Alzette (Luxembourg)**, 2.5 km from the LIST Belvaux
 campus: 187.5 ha, 2 720 footprints, a 250 m analysis grid.
+
+**Data source:** © OpenStreetMap contributors, [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/),
+read through the OSM API 0.6 as a bounding-box extract (2026-11-12). Missing heights are
+completed by the rule baseline below, never by a proprietary dataset; there is no
+personal data in the pipeline.
 
 [![CI](https://github.com/caoqyqianyi/citytwin/actions/workflows/ci.yml/badge.svg)](https://github.com/caoqyqianyi/citytwin/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-1f4e79)](pyproject.toml)
@@ -101,21 +112,31 @@ citytwin eval           # golden-question harness, writes docs/agent_eval.md
 `build` works offline.
 
 Open `web/index.html` directly in a browser — no server, no network, no JavaScript
-dependencies. `?mode=height` and `?mode=typology` switch the colouring, `?exag=0.8…4`
-sets the vertical exaggeration, `?sel=<id>` and `?cell=<id>` open a given selection, and
-`Esc` clears it. Both panels are drawn from one payload, so a click, a hover and a cell
+dependencies. The same folder is published to GitHub Pages by
+`.github/workflows/pages.yml` (enable Pages → Source: GitHub Actions once).
+
+`?mode=height` and `?mode=typology` switch the colouring, `?exag=0.8…4` sets the
+vertical exaggeration, `?sel=<id>` and `?cell=<id>` open a given selection, and `Esc`
+clears it. Both panels are drawn from one payload, so a click, a hover and a cell
 selection are shared: the plan stays north-up, the 3-D compass turns with the orbit and
 prints the bearing. The active footprint and cell are drawn in a violet with a
 white halo — a hue absent from every base ramp — and the 3-D view pins the chosen
 building with a leader line so it stays findable inside a dense block. Legends, the
 north arrow or compass, the scale bar and the EPSG:25832 readout sit in a strip below
-each map rather than on top of it, so the canvas is never covered. The viewer runs a small cartographic self-test at load
+each map rather than on top of it, so the canvas is never covered. The viewer runs a
+small cartographic self-test at load
 (`east → right`, `north → up`, in both projections) and exposes the result as
 `<html data-cartography="ok">`, which `make figures` asserts before taking screenshots.
 
-![The same building selected in both views](docs/assets/selection_view.png)
-*A shared selection (`?sel=36`): one click highlights the footprint in the plan and pins
-it in the 3-D view, with its 250 m cell framed in the same violet.*
+Three states of the same page — the parts a reviewer can try in thirty seconds:
+
+| Typology · three urban-form clusters | Height · 3.2× vertical, one footprint selected | Selection · one state, two views |
+|:---:|:---:|:---:|
+| [![Typology mode](docs/assets/typology_view.png)](docs/assets/typology_view.png) | [![Height mode with vertical exaggeration](docs/assets/height_view.png)](docs/assets/height_view.png) | [![Linked selection](docs/assets/selection_view.png)](docs/assets/selection_view.png) |
+
+*Typology recolours every footprint by its cluster (k = 3, ARI 0.943). Height exposes the
+completed heights and demonstrates the vertical slider. Selection (`?sel=36`) is one
+shared state: the plan, the 3-D model and the inspector all point at the same building.*
 
 ## Pipeline
 
