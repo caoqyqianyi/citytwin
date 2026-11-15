@@ -22,7 +22,7 @@ from shapely.geometry import LineString, Point, Polygon
 from ..config import AOI, CRS_GEOGRAPHIC, RAW_DIR, STOREY_HEIGHT_M
 
 OSM_API = "https://api.openstreetmap.org/api/0.6/map"
-USER_AGENT = "citytwin/0.5 (research prototype; contact: caoqy.qianyi@gmail.com)"
+USER_AGENT = "citytwin/0.5 (research prototype; https://github.com/caoqyqianyi/citytwin)"
 
 GREEN_LEISURE = {"park", "garden", "playground", "pitch", "nature_reserve", "common"}
 GREEN_LANDUSE = {

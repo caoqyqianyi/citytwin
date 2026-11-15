@@ -9,7 +9,6 @@ type: software
 authors:
   - family-names: Cao
     given-names: Qianyi
-    email: caoqy.qianyi@gmail.com
 repository-code: "https://github.com/caoqyqianyi/citytwin"
 keywords:
   - geospatial

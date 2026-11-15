@@ -56,11 +56,13 @@ shoot "" "$OUT/plan_view.png"
 shoot "mode=typology" "$OUT/typology_view.png"
 shoot "mode=height&exag=3.2&sel=36" "$OUT/height_view.png"
 shoot "sel=36" "$OUT/selection_view.png"
+shoot "cell=7" "$OUT/cell_view.png"
 
 # keep README images light enough for GitHub
 if command -v sips >/dev/null 2>&1; then
   for f in "$OUT/plan_view.png" "$OUT/typology_view.png" \
-           "$OUT/height_view.png" "$OUT/selection_view.png"; do
+           "$OUT/height_view.png" "$OUT/selection_view.png" \
+           "$OUT/cell_view.png"; do
     sips --resampleWidth 1600 "$f" >/dev/null
   done
 fi

@@ -192,7 +192,7 @@ def create_app(store_path: Path | str | None = None) -> FastAPI:
                 "name": "citytwin (research prototype)",
                 "url": "https://github.com/caoqyqianyi/citytwin",
             },
-            "contact": {"name": "Qianyi Cao", "email": "caoqy.qianyi@gmail.com"},
+            "contact": {"name": "Qianyi Cao"},
             "license": {
                 "name": "MIT (software) / ODbL 1.0 (data)",
                 "url": "https://opendatacommons.org/licenses/odbl/1-0/",

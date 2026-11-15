@@ -8,7 +8,7 @@ version = "0.5.0"
 description = "Standards-first components for urban geospatial digital twins: OSM to CityJSON, GeoAI height estimation, heat-exposure analytics, OGC API Features, 3D Tiles and an auditable agent layer."
 readme = "README.md"
 license = { text = "MIT" }
-authors = [{ name = "Qianyi Cao", email = "caoqy.qianyi@gmail.com" }]
+authors = [{ name = "Qianyi Cao" }]
 requires-python = ">=3.11"
 keywords = [
   "geospatial",

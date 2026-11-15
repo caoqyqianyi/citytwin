@@ -18,7 +18,7 @@ The study area is **Esch-sur-Alzette (Luxembourg)**, 2.5 km from the LIST Belvau
 campus: 187.5 ha, 2 720 footprints, a 250 m analysis grid.
 
 **Data source:** © OpenStreetMap contributors, [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/),
-read through the OSM API 0.6 as a bounding-box extract (2026-11-12). Missing heights are
+read through the OSM API 0.6 as a bounding-box extract (2026-11-11). Missing heights are
 completed by the rule baseline below, never by a proprietary dataset; there is no
 personal data in the pipeline.
 
@@ -128,15 +128,18 @@ small cartographic self-test at load
 (`east → right`, `north → up`, in both projections) and exposes the result as
 `<html data-cartography="ok">`, which `make figures` asserts before taking screenshots.
 
-Three states of the same page — the parts a reviewer can try in thirty seconds:
+Four states of the same page — the parts a reviewer can try in thirty seconds:
 
-| Typology · three urban-form clusters | Height · 3.2× vertical, one footprint selected | Selection · one state, two views |
-|:---:|:---:|:---:|
-| [![Typology mode](docs/assets/typology_view.png)](docs/assets/typology_view.png) | [![Height mode with vertical exaggeration](docs/assets/height_view.png)](docs/assets/height_view.png) | [![Linked selection](docs/assets/selection_view.png)](docs/assets/selection_view.png) |
+| Typology · three urban-form clusters | Height · 3.2× vertical, one footprint selected |
+|:---:|:---:|
+| [![Typology mode](docs/assets/typology_view.png)](docs/assets/typology_view.png) | [![Height mode with vertical exaggeration](docs/assets/height_view.png)](docs/assets/height_view.png) |
+| **Selection · one building, two views** | **Selection · one 250 m cell, two views** |
+| [![A building selected in both views](docs/assets/selection_view.png)](docs/assets/selection_view.png) | [![A 250 m cell selected in both views](docs/assets/cell_view.png)](docs/assets/cell_view.png) |
 
 *Typology recolours every footprint by its cluster (k = 3, ARI 0.943). Height exposes the
-completed heights and demonstrates the vertical slider. Selection (`?sel=36`) is one
-shared state: the plan, the 3-D model and the inspector all point at the same building.*
+completed heights and demonstrates the vertical slider. Selection is one shared state: a
+building (`?sel=36`) or a 250 m cell (`?cell=7`) is outlined in the plan, framed in the
+3-D view and described in the inspector.*
 
 ## Pipeline
 
@@ -245,4 +248,4 @@ inherit ODbL.
 }
 ```
 
-Contact: Qianyi Cao — caoqy.qianyi@gmail.com
+Questions and issues: please open a GitHub issue.
