@@ -53,9 +53,7 @@ def test_viewer_is_offline(tmp_path, simple_buildings, simple_cells, simple_gree
     assert '"buildings"' in html
     # no external resources: no CDN, no fonts, no tiles. Attribution anchors are
     # plain links — they cost nothing until a reader clicks them.
-    assert not re.search(
-        r'<(?:script|img|iframe|link)\b[^>]*(?:src|href)=["\']https?://', html
-    )
+    assert not re.search(r'<(?:script|img|iframe|link)\b[^>]*(?:src|href)=["\']https?://', html)
     for forbidden in ("cdn.", "unpkg", "jsdelivr", "@import", "url(http"):
         assert forbidden not in html
     assert "Esch-sur-Alzette" in html

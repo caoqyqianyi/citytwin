@@ -29,6 +29,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+        with:
+          # create the Pages site on the first run instead of failing with 404
+          enablement: true
       - name: Stage the viewer
         run: mkdir -p _site && cp web/index.html _site/index.html
       - uses: actions/upload-pages-artifact@v3
